@@ -9,11 +9,16 @@ web/         Next.js + wagmi/viem frontend (landing, markets table, market page,
 
 ## Status
 
-v2 (USDC bets) is complete: 22 unit and fuzz tests pass. The live Base Sepolia contract below is still v1 (ETH bets, git tag `v1`) until v2 is deployed there.
+v2 (USDC bets) is complete: 22 unit and fuzz tests pass.
 
 **Live site: https://saidso-eight.vercel.app**
 
-Contract on Base Sepolia: [`0x28d18bb0fce140a8ce5052127b3835f4b8ae6b87`](https://sepolia.basescan.org/address/0x28d18bb0fce140a8ce5052127b3835f4b8ae6b87)
+Contracts on Base Sepolia:
+
+- v2, USDC (live site): [`0x15504799b04573c1a659b7931c7a498950b2c6f0`](https://sepolia.basescan.org/address/0x15504799b04573c1a659b7931c7a498950b2c6f0)
+- v1, ETH (git tag `v1`): [`0x28d18bb0fce140a8ce5052127b3835f4b8ae6b87`](https://sepolia.basescan.org/address/0x28d18bb0fce140a8ce5052127b3835f4b8ae6b87)
+
+Get test USDC for Base Sepolia at [faucet.circle.com](https://faucet.circle.com).
 
 ```bash
 cd contracts
