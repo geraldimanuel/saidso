@@ -15,7 +15,8 @@ v3 (disputes + auto-refunds) is complete: 35 unit and fuzz tests plus 3 invarian
 
 Contracts on Base Sepolia:
 
-- v2, USDC (live site): [`0x15504799b04573c1a659b7931c7a498950b2c6f0`](https://sepolia.basescan.org/address/0x15504799b04573c1a659b7931c7a498950b2c6f0)
+- v3, USDC + disputes (live site; demo windows 1 h / 10 min / 30 min): [`0xa1c736e608b9a3afb2f28a2fc1a9c13083cf070f`](https://sepolia.basescan.org/address/0xa1c736e608b9a3afb2f28a2fc1a9c13083cf070f)
+- v2, USDC: [`0x15504799b04573c1a659b7931c7a498950b2c6f0`](https://sepolia.basescan.org/address/0x15504799b04573c1a659b7931c7a498950b2c6f0)
 - v1, ETH (git tag `v1`): [`0x28d18bb0fce140a8ce5052127b3835f4b8ae6b87`](https://sepolia.basescan.org/address/0x28d18bb0fce140a8ce5052127b3835f4b8ae6b87)
 
 Get test USDC for Base Sepolia at [faucet.circle.com](https://faucet.circle.com).
