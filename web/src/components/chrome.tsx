@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { useConnect, useConnection, useConnectors, useDisconnect, WagmiProvider } from "wagmi";
-import { REPO_URL, wagmiConfig } from "@/lib/contract";
+import { CHAIN, REPO_URL, wagmiConfig } from "@/lib/contract";
 import { short } from "@/lib/markets";
 import { d, Split, VideoBg } from "@/components/ui";
 import { reveal } from "@/components/motion";
@@ -32,7 +32,7 @@ function WalletButton() {
       </button>
     );
   return (
-    <button className={cls} onClick={() => connectors[0] && connect.mutate({ connector: connectors[0] })} disabled={connect.isPending}>
+    <button className={cls} onClick={() => connectors[0] && connect.mutate({ connector: connectors[0], chainId: CHAIN.id })} disabled={connect.isPending}>
       {connect.isPending ? "Connecting…" : "Connect"}
     </button>
   );
