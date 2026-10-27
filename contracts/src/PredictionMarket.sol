@@ -4,8 +4,6 @@ pragma solidity ^0.8.24;
 /// @title PredictionMarket (v1, ETH)
 /// @notice Friend-group yes/no markets. Creator asks a question, friends bet ETH on YES or NO
 ///         until the deadline, creator resolves, winners split the whole pot pro-rata.
-/// @dev Learning scaffold: createMarket + views are done as a worked example.
-///      bet / resolve / claim are yours — make `forge test` go green.
 contract PredictionMarket {
     enum Outcome {
         Unresolved,
@@ -47,10 +45,9 @@ contract PredictionMarket {
     error AlreadyClaimed();
     error NothingToClaim();
     error TransferFailed();
-    error NotImplemented();
 
     // ---------------------------------------------------------------------
-    // Done for you
+    // Markets
     // ---------------------------------------------------------------------
 
     function createMarket(string calldata question, uint64 deadline) external returns (uint256 id) {
@@ -72,39 +69,64 @@ contract PredictionMarket {
     }
 
     // ---------------------------------------------------------------------
-    // Your turn. Each TODO lists the rules the tests check.
+    // Betting, resolving, claiming
     // ---------------------------------------------------------------------
 
-    /// TODO:
-    /// - revert MarketNotFound if id doesn't exist
-    /// - revert BettingClosed if block.timestamp >= deadline
-    /// - revert ZeroAmount if msg.value == 0
-    /// - add msg.value to the right pool + the sender's stake, emit BetPlaced
+    /// @notice Stake msg.value on YES (`yes = true`) or NO until the deadline.
     function bet(uint256 id, bool yes) external payable {
-        id; yes;
-        revert NotImplemented();
+        if (id >= marketCount) revert MarketNotFound();
+        Market storage m = _markets[id];
+        if (block.timestamp >= m.deadline) revert BettingClosed();
+        if (msg.value == 0) revert ZeroAmount();
+
+        if (yes) {
+            m.yesPool += msg.value;
+            yesStake[id][msg.sender] += msg.value;
+        } else {
+            m.noPool += msg.value;
+            noStake[id][msg.sender] += msg.value;
+        }
+
+        emit BetPlaced(id, msg.sender, yes, msg.value);
     }
 
-    /// TODO:
-    /// - revert MarketNotFound / NotCreator / TooEarly (before deadline) / AlreadyResolved
-    /// - revert InvalidOutcome if outcome == Unresolved
-    /// - store outcome, emit MarketResolved
+    /// @notice Creator sets the result once betting has closed. One shot, no changes after.
     function resolve(uint256 id, Outcome outcome) external {
-        id; outcome;
-        revert NotImplemented();
+        if (id >= marketCount) revert MarketNotFound();
+        Market storage m = _markets[id];
+        if (msg.sender != m.creator) revert NotCreator();
+        if (block.timestamp < m.deadline) revert TooEarly();
+        if (m.outcome != Outcome.Unresolved) revert AlreadyResolved();
+        if (outcome == Outcome.Unresolved) revert InvalidOutcome();
+
+        m.outcome = outcome;
+        emit MarketResolved(id, outcome);
     }
 
-    /// TODO (pull payments — winners withdraw, contract never pushes):
-    /// - revert NotResolved / AlreadyClaimed
-    /// - payout:
-    ///     Invalid, or winning side's pool is 0  -> refund yesStake + noStake
-    ///     otherwise -> winnerStake * (yesPool + noPool) / winningPool
-    /// - revert NothingToClaim if payout == 0
-    /// - mark claimed BEFORE sending ETH (checks-effects-interactions), then send, emit Claimed
-    /// - returns the payout
+    /// @notice Pull your payout after resolution. Winners split the pot pro-rata;
+    ///         Invalid (or nobody on the winning side) refunds everyone.
     function claim(uint256 id) external returns (uint256 payout) {
-        id;
-        payout;
-        revert NotImplemented();
+        // checks
+        if (id >= marketCount) revert MarketNotFound();
+        Market storage m = _markets[id];
+        if (m.outcome == Outcome.Unresolved) revert NotResolved();
+        if (claimed[id][msg.sender]) revert AlreadyClaimed();
+
+        uint256 winningPool = m.outcome == Outcome.Yes ? m.yesPool : m.noPool;
+        if (m.outcome == Outcome.Invalid || winningPool == 0) {
+            payout = yesStake[id][msg.sender] + noStake[id][msg.sender];
+        } else {
+            uint256 stake = m.outcome == Outcome.Yes ? yesStake[id][msg.sender] : noStake[id][msg.sender];
+            payout = (stake * (m.yesPool + m.noPool)) / winningPool; // multiply first, divide last
+        }
+        if (payout == 0) revert NothingToClaim();
+
+        // effects
+        claimed[id][msg.sender] = true;
+
+        // interactions
+        (bool ok,) = msg.sender.call{value: payout}("");
+        if (!ok) revert TransferFailed();
+        emit Claimed(id, msg.sender, payout);
     }
 }

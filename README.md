@@ -7,13 +7,13 @@ contracts/   Solidity + Foundry: PredictionMarket.sol, tests, deploy script
 web/         Next.js + wagmi/viem frontend (landing, markets table, market page, create form)
 ```
 
-## Status: learning build
+## Status
 
-The contract is a **learning scaffold**. `createMarket` and the views are implemented. `bet`, `resolve` and `claim` revert with `NotImplemented()`, and the test suite in `contracts/test/` is the spec they need to meet.
+v1 (ETH bets) is complete: 19 unit and fuzz tests pass.
 
 ```bash
 cd contracts
-forge test            # 3 pass, 16 fail until bet/resolve/claim are written
+forge test
 ```
 
 The frontend runs on demo data until a contract address is configured, so you can see the UI right away.
@@ -48,7 +48,7 @@ Deploying to Base Sepolia: `forge script script/Deploy.s.sol --rpc-url https://s
 
 ## Roadmap
 
-- [ ] v1: implement `bet` / `resolve` / `claim` until `forge test` passes
+- [x] v1: ETH markets: create, bet, resolve, claim
 - [ ] v2: USDC bets (ERC20 `approve` / `transferFrom`, SafeERC20)
 - [ ] v3: dispute window, auto-refund if the creator never resolves, invariant tests
 - [ ] v4: deploy + verify on Base Sepolia, gas report
