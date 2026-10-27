@@ -6,16 +6,21 @@ export const MARKET_ADDRESS = process.env.NEXT_PUBLIC_MARKET_ADDRESS as Address 
 export const CHAIN = process.env.NEXT_PUBLIC_CHAIN === "anvil" ? foundry : baseSepolia;
 
 export const marketAbi = parseAbi([
-  "struct Market { address creator; uint64 deadline; uint8 outcome; uint256 yesPool; uint256 noPool; string question; }",
+  "struct Market { address creator; uint64 deadline; uint8 outcome; bool arbitrated; address arbiter; uint64 resolvedAt; uint64 disputedAt; uint256 yesPool; uint256 noPool; string question; }",
   "function marketCount() view returns (uint256)",
   "function getMarket(uint256 id) view returns (Market)",
   "function yesStake(uint256 id, address user) view returns (uint256)",
   "function noStake(uint256 id, address user) view returns (uint256)",
   "function claimed(uint256 id, address user) view returns (bool)",
-  "function createMarket(string question, uint64 deadline) returns (uint256)",
+  "function RESOLVE_WINDOW() view returns (uint64)",
+  "function DISPUTE_WINDOW() view returns (uint64)",
+  "function ARBITER_WINDOW() view returns (uint64)",
+  "function createMarket(string question, uint64 deadline, address arbiter) returns (uint256)",
   "function bet(uint256 id, bool yes, uint256 amount)",
   "function token() view returns (address)",
   "function resolve(uint256 id, uint8 outcome)",
+  "function dispute(uint256 id)",
+  "function arbitrate(uint256 id, uint8 outcome)",
   "function claim(uint256 id) returns (uint256)",
 ]);
 
@@ -31,14 +36,22 @@ export const DECIMALS = 6;
 
 export const Outcome = { Unresolved: 0, Yes: 1, No: 2, Invalid: 3 } as const;
 
+/** Seconds the creator / bettors / arbiter get after each step. Set per deployment, read from the contract. */
+export type Windows = { resolve: number; dispute: number; arbiter: number };
+
 export type Market = {
   id: number;
   creator: Address;
+  arbiter: Address;
   deadline: number; // unix seconds
-  outcome: number;
+  outcome: number; // creator's call, or the arbiter's once arbitrated
+  arbitrated: boolean;
+  resolvedAt: number; // 0 = not resolved
+  disputedAt: number; // 0 = not disputed
   yesPool: bigint;
   noPool: bigint;
   question: string;
+  windows: Windows;
 };
 
 export const REPO_URL = "https://github.com/geraldimanuel/saidso";

@@ -12,7 +12,8 @@ key() { cast wallet private-key "$MNEMONIC" "$1"; }
 USDC=$(cast call "$PM" "token()(address)")
 usdc() { cast to-unit "${1}ether" 12 | cut -d. -f1; } # "0.3" -> 300000 (6 decimals)
 
-create() { cast send -q "$PM" "createMarket(string,uint64)" "$2" "$3" --private-key "$(key "$1")"; }
+ARBITER=$(cast wallet address "$(key 5)") # account #5 referees every sample market
+create() { cast send -q "$PM" "createMarket(string,uint64,address)" "$2" "$3" "$ARBITER" --private-key "$(key "$1")"; }
 # approve exactly the bet, then bet: the same two transactions the frontend sends
 bet() {
   cast send -q "$USDC" "approve(address,uint256)" "$PM" "$(usdc "$4")" --private-key "$(key "$1")"
@@ -53,6 +54,7 @@ done
 
 resolve 1 0 2 # NO
 resolve 2 1 1 # YES
+# both sit in the dispute window for DISPUTE_WINDOW, then become final
 # market 2 stays closed + unresolved so you can resolve it from the UI as account #3
 
 echo "seeded $(cast call "$PM" "marketCount()(uint256)") markets"

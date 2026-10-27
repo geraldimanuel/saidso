@@ -6,7 +6,7 @@ import { useConnection, useReadContract, useReadContracts } from "wagmi";
 import { DemoNotice, StatusTag } from "@/components/markets-table";
 import { ArrowButton, Frame, Label, OddsBar } from "@/components/ui";
 import { DECIMALS, MARKET_ADDRESS, marketAbi, Outcome, type Market } from "@/lib/contract";
-import { usdc, idFromSlug, marketHref, odds, short, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
+import { usdc, idFromSlug, marketHref, odds, OUTCOME_LABEL, phaseOf, short, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
 import { useTx } from "@/lib/tx";
 
 export function MarketDetail({ params }: { params: Promise<{ slug: string }> }) {
@@ -41,6 +41,7 @@ export function MarketDetail({ params }: { params: Promise<{ slug: string }> }) 
     ["No pool", usdc(m.noPool)],
     [status === "open" ? "Closes in" : "Closed", status === "open" ? timeLeft(m.deadline, now) : new Date(m.deadline * 1000).toLocaleDateString()],
     ["Creator", short(m.creator)],
+    ["Arbiter", short(m.arbiter)],
     ["Market", `#${String(m.id).padStart(2, "0")}`],
   ];
 
@@ -48,7 +49,7 @@ export function MarketDetail({ params }: { params: Promise<{ slug: string }> }) 
     <main className="wrap pb-32 pt-36">
       <div className="flex flex-wrap items-center gap-4">
         <Label>Market #{String(m.id).padStart(2, "0")}</Label>
-        <StatusTag status={status} outcome={m.outcome} />
+        <StatusTag m={m} now={now} />
       </div>
       <h1 className="display mt-6 max-w-[1000px] text-[clamp(32px,4vw,58px)]">{m.question}</h1>
       {isDemo && <DemoNotice />}
@@ -82,7 +83,7 @@ export function MarketDetail({ params }: { params: Promise<{ slug: string }> }) 
           ) : status === "open" ? (
             <BetPanel m={m} />
           ) : (
-            <SettlePanel m={m} status={status} />
+            <SettlePanel m={m} now={now} />
           )}
         </Frame>
       </div>
@@ -166,7 +167,16 @@ function BetPanel({ m, disabled = false }: { m: Market; disabled?: boolean }) {
   );
 }
 
-function SettlePanel({ m, status }: { m: Market; status: "closed" | "settled" }) {
+const CALLS = [
+  ["Yes", Outcome.Yes],
+  ["No", Outcome.No],
+  ["Void (refund all)", Outcome.Invalid],
+] as const;
+
+const TITLE = { awaiting: "Awaiting result", disputable: "Result called", disputed: "Disputed", final: "Settled" } as const;
+
+/** Everything after betting closes: resolve (creator) → dispute window (bettors) → arbitrate (arbiter) → claim. */
+function SettlePanel({ m, now }: { m: Market; now: number | null }) {
   const { address } = useConnection();
   const tx = useTx();
   const me = useReadContracts({
@@ -179,47 +189,90 @@ function SettlePanel({ m, status }: { m: Market; status: "closed" | "settled" })
     query: { enabled: !!address },
   });
   const [yesStake, noStake, claimed] = (me.data ?? []).map((r) => r.result) as [bigint?, bigint?, boolean?];
+  const { phase, final, until } = phaseOf(m, now);
+  if (phase === "open") return null;
+
   const isCreator = address?.toLowerCase() === m.creator.toLowerCase();
-  const call = (functionName: "resolve" | "claim", args: readonly [bigint] | readonly [bigint, number]) =>
+  const isArbiter = address?.toLowerCase() === m.arbiter.toLowerCase();
+  const isBettor = (yesStake ?? 0n) + (noStake ?? 0n) > 0n;
+  const left = until ? timeLeft(until, now) : "";
+  const send = (functionName: "resolve" | "dispute" | "arbitrate" | "claim", args: readonly [bigint] | readonly [bigint, number]) =>
     MARKET_ADDRESS && tx.send({ address: MARKET_ADDRESS, abi: marketAbi, functionName, args } as Parameters<typeof tx.send>[0]);
+  const note = (text: React.ReactNode) => <p className="mt-6 text-[14px] leading-[1.5] text-white/60">{text}</p>;
+  const calls = (fn: "resolve" | "arbitrate") => (
+    <div className="mt-8 space-y-3">
+      {CALLS.map(([label, outcome]) => (
+        <ArrowButton key={label} className="w-full justify-between" disabled={tx.busy} onClick={() => send(fn, [BigInt(m.id), outcome])}>
+          {fn === "resolve" ? "Resolve" : "Final call:"} {label}
+        </ArrowButton>
+      ))}
+    </div>
+  );
 
   return (
     <div>
-      <Label>{status === "closed" ? "Awaiting result" : "Settled"}</Label>
+      <Label>{TITLE[phase]}</Label>
       {address && (
         <p className="mt-6 text-[14px]">
           Your stake: {usdc(yesStake ?? 0n)} on Yes · {usdc(noStake ?? 0n)} on No
         </p>
       )}
 
-      {status === "closed" &&
+      {phase === "awaiting" &&
         (isCreator ? (
-          <div className="mt-8 space-y-3">
-            <p className="text-[13px] text-white/60">You created this market. Call the result:</p>
-            {(
-              [
-                ["Yes", Outcome.Yes],
-                ["No", Outcome.No],
-                ["Void (refund all)", Outcome.Invalid],
-              ] as const
-            ).map(([label, outcome]) => (
-              <ArrowButton key={label} className="w-full justify-between" disabled={tx.busy} onClick={() => call("resolve", [BigInt(m.id), outcome])}>
-                Resolve {label}
-              </ArrowButton>
-            ))}
-          </div>
+          <>
+            {note(<>You created this market. Call the result within {left}, or it voids and everyone is refunded.</>)}
+            {calls("resolve")}
+          </>
         ) : (
-          <p className="mt-6 text-[14px] text-white/60">Betting closed. Waiting for {short(m.creator)} to settle it.</p>
+          note(<>Betting closed. Waiting for {short(m.creator)} to call it. If they don&apos;t within {left}, everyone is refunded.</>)
         ))}
 
-      {status === "settled" &&
-        (claimed ? (
-          <p className="mt-6 text-[14px] text-yes">Claimed ✓</p>
+      {phase === "disputable" && (
+        <>
+          {note(
+            <>
+              {isCreator ? "You" : short(m.creator)} called it <span className="text-white">{OUTCOME_LABEL[m.outcome]}</span>. Bettors can
+              dispute for {left}, then it&apos;s final.
+            </>,
+          )}
+          {isBettor && !isCreator && (
+            <ArrowButton className="mt-8" disabled={tx.busy} onClick={() => send("dispute", [BigInt(m.id)])}>
+              Dispute this result
+            </ArrowButton>
+          )}
+        </>
+      )}
+
+      {phase === "disputed" &&
+        (isArbiter ? (
+          <>
+            {note(<>A bettor disputed the call ({OUTCOME_LABEL[m.outcome]}). You&apos;re the arbiter: make the final call within {left}, or it voids.</>)}
+            {calls("arbitrate")}
+          </>
         ) : (
-          <ArrowButton className="mt-8" disabled={!address || tx.busy} onClick={() => call("claim", [BigInt(m.id)])}>
-            Claim payout
-          </ArrowButton>
+          note(<>Disputed. Waiting for arbiter {short(m.arbiter)} to make the final call. If they don&apos;t within {left}, everyone is refunded.</>)
         ))}
+
+      {phase === "final" && (
+        <>
+          {note(
+            <>
+              Final: <span className="text-white">{OUTCOME_LABEL[final]}</span>
+              {final === Outcome.Invalid ? ". Everyone gets their stake back." : m.arbitrated ? ", decided by the arbiter." : "."}
+            </>,
+          )}
+          {claimed ? (
+            <p className="mt-6 text-[14px] text-yes">Claimed ✓</p>
+          ) : (
+            isBettor && (
+              <ArrowButton className="mt-8" disabled={tx.busy} onClick={() => send("claim", [BigInt(m.id)])}>
+                {final === Outcome.Invalid ? "Claim refund" : "Claim payout"}
+              </ArrowButton>
+            )
+          )}
+        </>
+      )}
       {tx.status && <p className={`mt-4 text-[13px] ${tx.isError ? "text-no" : "text-white/70"}`}>{tx.status}</p>}
     </div>
   );

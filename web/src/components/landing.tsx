@@ -5,7 +5,7 @@ import { CountUp, reveal, Scrub } from "@/components/motion";
 import { ArrowButton, d, Frame, Label, OddsBar, PixelMark, Split, VideoBg, XLines } from "@/components/ui";
 import { Avatar, Glow, OddsChart } from "@/components/visuals";
 import { REPO_URL } from "@/lib/contract";
-import { usdc, marketHref, odds, OUTCOME_LABEL, short, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
+import { usdc, marketHref, odds, OUTCOME_LABEL, phaseOf, short, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
 
 export function Hero() {
   return (
@@ -197,7 +197,9 @@ export function HowItWorks() {
             <span className="text-white/60">{"// one tx, that's the whole setup\n"}</span>
             {"pm.createMarket(\n  "}
             <span className="text-yes">{'"Will Budi be late?"'}</span>
-            {",\n  friday8pm\n);"}
+            {",\n  friday8pm,\n  sarah "}
+            <span className="text-white/60">{"// arbiter"}</span>
+            {"\n);"}
           </pre>
         </Glow>
       </Frame>
@@ -214,8 +216,9 @@ export function HowItWorks() {
             <Split text="Winners split the whole pot" />
           </h3>
           <p className="mt-5 max-w-[480px] text-[16px] leading-[1.5]">
-            The creator settles the outcome after the deadline. Winners claim pro-rata. Nobody bet on the right side, or the market is
-            voided? Everyone gets refunded.
+            The creator calls the result after the deadline. Any bettor can dispute it for a day, and a neutral arbiter friend makes
+            the final call. Winners claim pro-rata. Voided, nobody on the winning side, or the creator never calls it? Everyone gets
+            refunded.
           </p>
           <ArrowButton href={REPO_URL} className="mt-12">
             Read the contract
@@ -236,7 +239,7 @@ export function RecentlySettled() {
       <p ref={reveal} className="rv fade max-w-[360px] text-[16px] leading-[1.5]">Catch up on the latest calls — who was right, and who paid up.</p>
       <div className="mt-16 border-t border-line">
         {settled.map((m) => {
-          const label = OUTCOME_LABEL[m.outcome];
+          const label = OUTCOME_LABEL[phaseOf(m, now).final];
           return (
             <article key={m.id} ref={reveal} className="rv grid items-center gap-8 border-b border-line py-8 md:grid-cols-2">
               <div>

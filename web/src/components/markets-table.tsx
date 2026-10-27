@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { ArrowButton, Frame, Label, OddsBar } from "@/components/ui";
-import { usdc, marketHref, odds, OUTCOME_LABEL, statusOf, timeLeft, useMarkets, useNow, type Status } from "@/lib/markets";
+import { usdc, marketHref, odds, OUTCOME_LABEL, phaseOf, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
+import type { Market } from "@/lib/contract";
 
 const FILTERS = ["all", "open", "closed", "settled"] as const;
 type Filter = (typeof FILTERS)[number];
@@ -17,9 +18,12 @@ export function DemoNotice() {
   );
 }
 
-export function StatusTag({ status, outcome }: { status: Status; outcome: number }) {
-  const text = status === "settled" ? OUTCOME_LABEL[outcome] : status;
-  const color = status === "open" ? "text-yes" : status === "settled" ? "text-white" : "text-white/50";
+const PHASE_TAG = { open: "open", awaiting: "closed", disputable: "called", disputed: "disputed" } as const;
+
+export function StatusTag({ m, now }: { m: Market; now: number | null }) {
+  const { phase, final } = phaseOf(m, now);
+  const text = phase === "final" ? OUTCOME_LABEL[final] : PHASE_TAG[phase];
+  const color = phase === "open" ? "text-yes" : phase === "final" ? "text-white" : phase === "disputed" ? "text-no" : "text-white/50";
   return <span className={`whitespace-nowrap text-[13px] uppercase ${color}`}>[ {text} ]</span>;
 }
 
@@ -91,7 +95,7 @@ export function MarketsTable() {
                   </td>
                   <td className="hidden whitespace-nowrap px-3 py-6 sm:px-5 sm:table-cell">{usdc(o.total)}</td>
                   <td className="px-3 py-6 sm:px-5">
-                    <StatusTag status={statusOf(m, now)} outcome={m.outcome} />
+                    <StatusTag m={m} now={now} />
                   </td>
                   <td className="px-3 py-6 sm:px-5 text-right transition-transform group-hover:translate-x-1" aria-hidden>
                     →

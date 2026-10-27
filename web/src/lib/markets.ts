@@ -3,15 +3,21 @@
 import { useEffect, useState } from "react";
 import { formatUnits, parseUnits } from "viem";
 import { useReadContract, useReadContracts } from "wagmi";
-import { DECIMALS, MARKET_ADDRESS, marketAbi, Outcome, type Market } from "./contract";
+import { DECIMALS, MARKET_ADDRESS, marketAbi, Outcome, type Market, type Windows } from "./contract";
 
 const H = 3600;
+const PROD_WINDOWS: Windows = { resolve: 7 * 24 * H, dispute: 24 * H, arbiter: 3 * 24 * H };
 const BASE = 1_793_000_000; // fixed so prerender and hydration agree
 const demo = (id: number, question: string, dl: number, yes: string, no: string, outcome = 0): Market => ({
   id,
   question,
   deadline: BASE + dl,
   outcome,
+  arbitrated: false,
+  arbiter: `0x${"5a".repeat(20)}`,
+  resolvedAt: outcome ? BASE + dl + H : 0,
+  disputedAt: 0,
+  windows: PROD_WINDOWS,
   yesPool: parseUnits(yes, DECIMALS),
   noPool: parseUnits(no, DECIMALS),
   creator: `0x${(id + 1).toString(16).padStart(4, "0")}${"a1".repeat(18)}` as Market["creator"],
@@ -37,6 +43,12 @@ export function useMarkets() {
     query: { enabled },
   });
   const n = Number(count.data ?? 0n);
+  const win = useReadContracts({
+    contracts: (["RESOLVE_WINDOW", "DISPUTE_WINDOW", "ARBITER_WINDOW"] as const).map((functionName) => ({ address: MARKET_ADDRESS, abi: marketAbi, functionName })),
+    query: { enabled, staleTime: Infinity }, // immutable
+  });
+  const [rw, dw, aw] = (win.data ?? []).map((r) => Number(r.result ?? 0n));
+  const windows: Windows = { resolve: rw, dispute: dw, arbiter: aw };
   const reads = useReadContracts({
     contracts: Array.from({ length: n }, (_, i) => ({
       address: MARKET_ADDRESS,
@@ -51,17 +63,22 @@ export function useMarkets() {
   if (!enabled) {
     // demo deadlines stay relative to "now" so the demo never goes stale
     const shift = (now ?? BASE) - BASE;
-    const markets = DEMO_MARKETS.map((m) => ({ ...m, deadline: m.deadline + shift }));
+    const markets = DEMO_MARKETS.map((m) => ({ ...m, deadline: m.deadline + shift, resolvedAt: m.resolvedAt && m.resolvedAt + shift }));
     return { markets, isDemo: true, isLoading: false, refetch: () => {} };
   }
 
-  const markets: Market[] = (reads.data ?? []).flatMap((r, id) =>
-    r.status === "success" ? [{ id, ...(r.result as Omit<Market, "id" | "deadline">), deadline: Number((r.result as { deadline: bigint }).deadline) }] : [],
-  );
+  type Raw = Omit<Market, "id" | "windows" | "deadline" | "resolvedAt" | "disputedAt"> & Record<"deadline" | "resolvedAt" | "disputedAt", bigint>;
+  const markets: Market[] = !win.data
+    ? []
+    : (reads.data ?? []).flatMap((r, id) => {
+        if (r.status !== "success") return [];
+        const x = r.result as Raw;
+        return [{ ...x, id, windows, deadline: Number(x.deadline), resolvedAt: Number(x.resolvedAt), disputedAt: Number(x.disputedAt) }];
+      });
   return {
     markets: markets.reverse(),
     isDemo: false,
-    isLoading: count.isLoading || reads.isLoading,
+    isLoading: count.isLoading || reads.isLoading || win.isLoading,
     refetch: () => {
       count.refetch();
       reads.refetch();
@@ -82,10 +99,32 @@ export function useNow() {
 }
 
 export type Status = "open" | "closed" | "settled";
+export type Phase = "open" | "awaiting" | "disputable" | "disputed" | "final";
+
+/**
+ * Mirrors PredictionMarket.finalOutcome(): which step a market is in, its final outcome
+ * (Unresolved until final) and when the current window ends.
+ */
+export function phaseOf(m: Market, now: number | null): { phase: Phase; final: number; until?: number } {
+  const t = now ?? 0;
+  const w = m.windows;
+  if (t < m.deadline) return { phase: "open", final: Outcome.Unresolved, until: m.deadline };
+  if (m.outcome === Outcome.Unresolved) {
+    const until = m.deadline + w.resolve; // creator never called it -> void
+    return t >= until ? { phase: "final", final: Outcome.Invalid } : { phase: "awaiting", final: Outcome.Unresolved, until };
+  }
+  if (!m.disputedAt) {
+    const until = m.resolvedAt + w.dispute; // nobody disputed in time -> creator's call stands
+    return t >= until ? { phase: "final", final: m.outcome } : { phase: "disputable", final: Outcome.Unresolved, until };
+  }
+  if (m.arbitrated) return { phase: "final", final: m.outcome };
+  const until = m.disputedAt + w.arbiter; // arbiter stayed silent -> void
+  return t >= until ? { phase: "final", final: Outcome.Invalid } : { phase: "disputed", final: Outcome.Unresolved, until };
+}
 
 export function statusOf(m: Market, now: number | null): Status {
-  if (m.outcome !== Outcome.Unresolved) return "settled";
-  return now !== null && now >= m.deadline ? "closed" : "open";
+  const { phase } = phaseOf(m, now);
+  return phase === "open" ? "open" : phase === "final" ? "settled" : "closed";
 }
 
 export function odds(m: Market) {
@@ -101,6 +140,7 @@ export function timeLeft(deadline: number, now: number | null) {
   if (now === null) return "—";
   const s = deadline - now;
   if (s <= 0) return "Closed";
+  if (s < 60) return "<1m";
   const d = Math.floor(s / 86400);
   const h = Math.floor((s % 86400) / 3600);
   const m = Math.floor((s % 3600) / 60);
