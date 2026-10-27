@@ -11,7 +11,9 @@ web/         Next.js + wagmi/viem frontend (landing, markets table, market page,
 
 v1 (ETH bets) is complete: 19 unit and fuzz tests pass.
 
-Live on Base Sepolia: [`0x28d18bb0fce140a8ce5052127b3835f4b8ae6b87`](https://sepolia.basescan.org/address/0x28d18bb0fce140a8ce5052127b3835f4b8ae6b87)
+**Live site: https://saidso-eight.vercel.app**
+
+Contract on Base Sepolia: [`0x28d18bb0fce140a8ce5052127b3835f4b8ae6b87`](https://sepolia.basescan.org/address/0x28d18bb0fce140a8ce5052127b3835f4b8ae6b87)
 
 ```bash
 cd contracts

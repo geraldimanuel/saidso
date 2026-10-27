@@ -84,7 +84,8 @@ export function Stats() {
   const pot = markets.reduce((s, m) => s + m.yesPool + m.noPool, 0n);
   const stats = [
     [String(markets.length), "Markets", "Questions your friends couldn't let go"],
-    [eth(pot).replace(" ETH", ""), "ETH staked", "Put where their mouths are"],
+    // the big number has no room for 0.0000011-style testnet amounts
+    [pot > 0n && pot < 10n ** 15n ? "<0.001" : eth(pot).replace(" ETH", ""), "ETH staked", "Put where their mouths are"],
     [String(markets.filter((m) => statusOf(m, now) === "open").length), "Open", "Still taking bets right now"],
     [String(markets.filter((m) => statusOf(m, now) === "settled").length), "Settled", "Arguments finally ended"],
   ];
@@ -103,7 +104,7 @@ export function Stats() {
         <div className="grid grid-cols-2 border-t border-line bg-black/60 md:grid-cols-4">
           {stats.map(([n, label, desc]) => (
             <div key={label} className="px-[clamp(16px,3.5vw,50px)] py-9">
-              <p className="flex items-start gap-2">
+              <p className="flex flex-wrap items-start gap-2">
                 <span className="wordmark text-[clamp(40px,4vw,54px)]">
                   <CountUp value={n} />
                 </span>
