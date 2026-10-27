@@ -11,6 +11,8 @@ web/         Next.js + wagmi/viem frontend (landing, markets table, market page,
 
 v1 (ETH bets) is complete: 19 unit and fuzz tests pass.
 
+Live on Base Sepolia: [`0x28d18bb0fce140a8ce5052127b3835f4b8ae6b87`](https://sepolia.basescan.org/address/0x28d18bb0fce140a8ce5052127b3835f4b8ae6b87)
+
 ```bash
 cd contracts
 forge test
@@ -37,7 +39,12 @@ cp .env.example .env.local   # set NEXT_PUBLIC_MARKET_ADDRESS, NEXT_PUBLIC_CHAIN
 pnpm install && pnpm dev
 ```
 
-Deploying to Base Sepolia: `forge script script/Deploy.s.sol --rpc-url https://sepolia.base.org --broadcast --account <keystore> --verify`.
+Deploying to Base Sepolia (key lives in an encrypted Foundry keystore, `ETHERSCAN_API_KEY` set in the shell):
+
+```bash
+cast wallet import deployer --interactive
+forge script script/Deploy.s.sol --rpc-url https://sepolia.base.org --account deployer --broadcast --verify
+```
 
 ## Design decisions
 
