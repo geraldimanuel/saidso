@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg: #000;
+  --color-fg: #fff;
+  --color-muted: #8c8c8c;
+  --color-line: rgb(255 255 255 / 0.22);
+  --color-card: #2f2f2f;
+  --color-yes: #c8ff5a;
+  --color-no: #ff6b5a;
+  --font-display: var(--font-host-grotesk);
+  --font-mono: var(--font-geist-mono);
+  --font-wordmark: var(--font-syne);
+}
+
+html {
+  background: #000;
+  color-scheme: dark;
+}
+
+body {
+  background: #000;
+  color: #fff;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/* uppercase grotesk headline */
+.display {
+  font-family: var(--font-host-grotesk), sans-serif;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+
+.wordmark {
+  font-family: var(--font-syne), sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 0.9;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: clamp(16px, 4.9vw, 70px);
+}
+
+/* silky dark folds, stand-in for the template's photo background */
+.silk {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #0b0b0b;
+}
+.silk::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  z-index: -1;
+  background:
+    radial-gradient(90% 55% at 15% 105%, #3b3b3b 0%, transparent 60%),
+    radial-gradient(70% 40% at 95% 70%, #2a2a2a 0%, transparent 70%),
+    repeating-linear-gradient(162deg, #070707 0 70px, #1d1d1d 110px, #0a0a0a 170px);
+  filter: blur(16px);
+  transform: rotate(-4deg);
+  animation: drift 24s ease-in-out infinite alternate;
+}
+@keyframes drift {
+  to {
+    transform: rotate(-2deg) translate3d(-3%, 2%, 0) scale(1.05);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .silk::before {
+    animation: none;
+  }
+}
+
+/* split button: full top/bottom rules, short ticks at each vertical edge */
+.tick {
+  --t: 1.5px;
+  --h: 9px;
+  background:
+    linear-gradient(currentColor, currentColor) left top / var(--t) var(--h) no-repeat,
+    linear-gradient(currentColor, currentColor) left bottom / var(--t) var(--h) no-repeat;
+}
+.tick-r {
+  background:
+    linear-gradient(currentColor, currentColor) right top / 1.5px 9px no-repeat,
+    linear-gradient(currentColor, currentColor) right bottom / 1.5px 9px no-repeat;
+}
+
+.input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--color-line);
+  padding: 14px 16px;
+  font: inherit;
+  color: #fff;
+  outline: none;
+}
+.input:focus-visible {
+  border-color: #fff;
+}
+.input::placeholder {
+  color: var(--color-muted);
+}
+
+:focus-visible {
+  outline: 1.5px solid #fff;
+  outline-offset: 3px;
+}
