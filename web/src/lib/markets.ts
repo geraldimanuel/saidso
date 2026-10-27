@@ -94,7 +94,11 @@ export function odds(m: Market) {
   return { yes, no: Math.round((100 - yes) * 10) / 10, total };
 }
 
-export const eth = (v: bigint) => `${Number(formatEther(v)).toLocaleString("en-US", { maximumFractionDigits: 3 })} ETH`;
+/** 3 decimals normally; tiny testnet amounts keep 2 significant digits instead of rounding to 0. */
+export const eth = (v: bigint) => {
+  const n = Number(formatEther(v));
+  return `${n.toLocaleString("en-US", n > 0 && n < 0.001 ? { maximumSignificantDigits: 2 } : { maximumFractionDigits: 3 })} ETH`;
+};
 
 export function timeLeft(deadline: number, now: number | null) {
   if (now === null) return "—";
