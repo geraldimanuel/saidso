@@ -5,7 +5,7 @@ import { CountUp, reveal, Scrub } from "@/components/motion";
 import { ArrowButton, d, Frame, Label, OddsBar, PixelMark, Split, VideoBg, XLines } from "@/components/ui";
 import { Avatar, Glow, OddsChart } from "@/components/visuals";
 import { REPO_URL } from "@/lib/contract";
-import { eth, marketHref, odds, OUTCOME_LABEL, short, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
+import { usdc, marketHref, odds, OUTCOME_LABEL, short, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
 
 export function Hero() {
   return (
@@ -19,7 +19,7 @@ export function Hero() {
           </h1>
           <div className="max-w-[400px] md:justify-self-end">
             <p className="fade text-[16px] leading-[1.5]" style={d(900)}>
-              Prediction markets for your group chat. Ask a yes/no question, everyone stakes ETH on their call, and when time&apos;s up the
+              Prediction markets for your group chat. Ask a yes/no question, everyone stakes USDC on their call, and when time&apos;s up the
               winners split the whole pot.
             </p>
             <div className="fade mt-12" style={d(1100)}>
@@ -41,7 +41,7 @@ export function About() {
           <PixelMark />
           <div ref={reveal} className="rv fade">
             <p className="max-w-[400px] text-[16px] leading-[1.5]">
-              At Saidso, every "I said so" becomes a market. Put your ETH where your mouth is, and let a smart contract keep score.
+              At Saidso, every "I said so" becomes a market. Put your money where your mouth is, and let a smart contract keep score.
             </p>
             <ArrowButton href="/create" className="mt-12">
               Create a market
@@ -67,7 +67,7 @@ export function About() {
                 <p>
                   claim(<span className="text-yes">0</span>)
                 </p>
-                <p className="display text-[34px] text-yes">+0.84 ETH</p>
+                <p className="display text-[34px] text-yes">+84 USDC</p>
                 <p className="text-white/50">pulled, not pushed.</p>
               </div>
             </Frame>
@@ -84,8 +84,7 @@ export function Stats() {
   const pot = markets.reduce((s, m) => s + m.yesPool + m.noPool, 0n);
   const stats = [
     [String(markets.length), "Markets", "Questions your friends couldn't let go"],
-    // the big number has no room for 0.0000011-style testnet amounts
-    [pot > 0n && pot < 10n ** 15n ? "<0.001" : eth(pot).replace(" ETH", ""), "ETH staked", "Put where their mouths are"],
+    [usdc(pot).replace(" USDC", ""), "USDC staked", "Put where their mouths are"],
     [String(markets.filter((m) => statusOf(m, now) === "open").length), "Open", "Still taking bets right now"],
     [String(markets.filter((m) => statusOf(m, now) === "settled").length), "Settled", "Arguments finally ended"],
   ];
@@ -138,7 +137,7 @@ export function OpenMarkets() {
             <Frame key={m.id} className="flex flex-col bg-card p-5" bare delay={i * 120}>
               <p className="text-[13px] uppercase text-white/85">[ Closes in {timeLeft(m.deadline, now)} ]</p>
               <h3 className="display mt-4 min-h-[3.4em] text-[24px] leading-[1.15]">{m.question}</h3>
-              <p className="mt-6 text-[13px] uppercase">Pot {eth(o.total)}</p>
+              <p className="mt-6 text-[13px] uppercase">Pot {usdc(o.total)}</p>
               <OddsBar yes={o.yes} className="mt-3" />
               <p className="mt-2 flex justify-between text-[13px]">
                 <span>Yes {o.yes}%</span>
@@ -187,7 +186,7 @@ export function HowItWorks() {
             <Split text="Ask a yes/no question, set a deadline" />
           </h3>
           <p className="mt-5 max-w-[480px] text-[16px] leading-[1.5]">
-            Anyone can open a market. Friends bet ETH on YES or NO until the deadline, and every bet is public, onchain and final.
+            Anyone can open a market. Friends bet USDC on YES or NO until the deadline, and every bet is public, onchain and final.
           </p>
           <ArrowButton href="/create" className="mt-12">
             Create a market
@@ -206,7 +205,7 @@ export function HowItWorks() {
         <Glow seed="step-2" className="wipe order-last aspect-[58/34] p-6 md:order-first">
           <div className="relative flex h-full flex-col justify-center gap-4">
             <p className="display text-[clamp(20px,2.2vw,30px)]">payout = stake × pot ÷ winning pool</p>
-            <p className="text-[13px] text-white/80">1 ETH on YES · pot 8 ETH · YES pool 4 ETH → 2 ETH back</p>
+            <p className="text-[13px] text-white/80">10 USDC on YES · pot 80 USDC · YES pool 40 USDC → 20 USDC back</p>
           </div>
         </Glow>
         <div>
@@ -245,7 +244,7 @@ export function RecentlySettled() {
                   <Split text={m.question} />
                 </h3>
                 <p className="mt-5 max-w-[480px] text-[14px] leading-[1.5]">
-                  Settled {label.toUpperCase()}. {eth(m.yesPool + m.noPool)} pot, created by {short(m.creator)}.
+                  Settled {label.toUpperCase()}. {usdc(m.yesPool + m.noPool)} pot, created by {short(m.creator)}.
                 </p>
                 <ArrowButton href={marketHref(m)} className="mt-10">
                   View market

@@ -1,12 +1,12 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { parseEther } from "viem";
-import { useConnection, useReadContracts } from "wagmi";
+import { erc20Abi, parseUnits } from "viem";
+import { useConnection, useReadContract, useReadContracts } from "wagmi";
 import { DemoNotice, StatusTag } from "@/components/markets-table";
 import { ArrowButton, Frame, Label, OddsBar } from "@/components/ui";
-import { MARKET_ADDRESS, marketAbi, Outcome, type Market } from "@/lib/contract";
-import { eth, idFromSlug, marketHref, odds, short, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
+import { DECIMALS, MARKET_ADDRESS, marketAbi, Outcome, type Market } from "@/lib/contract";
+import { usdc, idFromSlug, marketHref, odds, short, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
 import { useTx } from "@/lib/tx";
 
 export function MarketDetail({ params }: { params: Promise<{ slug: string }> }) {
@@ -36,9 +36,9 @@ export function MarketDetail({ params }: { params: Promise<{ slug: string }> }) 
   const o = odds(m);
   const status = statusOf(m, now);
   const facts = [
-    ["Pot", eth(o.total)],
-    ["Yes pool", eth(m.yesPool)],
-    ["No pool", eth(m.noPool)],
+    ["Pot", usdc(o.total)],
+    ["Yes pool", usdc(m.yesPool)],
+    ["No pool", usdc(m.noPool)],
     [status === "open" ? "Closes in" : "Closed", status === "open" ? timeLeft(m.deadline, now) : new Date(m.deadline * 1000).toLocaleDateString()],
     ["Creator", short(m.creator)],
     ["Market", `#${String(m.id).padStart(2, "0")}`],
@@ -92,13 +92,27 @@ export function MarketDetail({ params }: { params: Promise<{ slug: string }> }) 
 
 function BetPanel({ m, disabled = false }: { m: Market; disabled?: boolean }) {
   const [yes, setYes] = useState(true);
-  const [amount, setAmount] = useState("0.01");
-  const { isConnected } = useConnection();
+  const [amount, setAmount] = useState("10");
+  const { address, isConnected } = useConnection();
   const tx = useTx();
   let value: bigint | null = null;
   try {
-    value = parseEther(amount);
+    value = parseUnits(amount, DECIMALS);
   } catch {}
+
+  // The market says which token it takes; then read our balance and how much the market may pull.
+  const { data: token } = useReadContract({ address: MARKET_ADDRESS, abi: marketAbi, functionName: "token", query: { enabled: !!MARKET_ADDRESS } });
+  const wallet = useReadContracts({
+    contracts: [
+      { address: token, abi: erc20Abi, functionName: "balanceOf", args: [address!] },
+      { address: token, abi: erc20Abi, functionName: "allowance", args: [address!, MARKET_ADDRESS!] },
+    ],
+    query: { enabled: !!token && !!address },
+  });
+  const [balance, allowance] = (wallet.data ?? []).map((r) => r.result as bigint | undefined);
+  const broke = value !== null && balance !== undefined && value > balance;
+  // step 1 of 2 until the market is allowed to pull this bet; approve exactly the bet, never unlimited
+  const needsApproval = value !== null && allowance !== undefined && allowance < value;
   const o = odds(m);
   // what you'd get back if your side wins and nobody else bets
   const side = yes ? m.yesPool : m.noPool;
@@ -123,18 +137,29 @@ function BetPanel({ m, disabled = false }: { m: Market; disabled?: boolean }) {
         ))}
       </div>
       <label className="mt-6 block text-[12px] uppercase text-white/55" htmlFor="amount">
-        Amount (ETH)
+        Amount (USDC)
       </label>
       <input id="amount" className="input mt-2" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
-      <p className="mt-3 text-[13px] text-white/60">Win now → ~{eth(est)} back</p>
+      <p className="mt-3 text-[13px] text-white/60">
+        Win now → ~{usdc(est)} back
+        {balance !== undefined && <span className={broke ? "text-no" : undefined}> · You have {usdc(balance)}</span>}
+      </p>
       <ArrowButton
         className="mt-8"
-        disabled={disabled || !isConnected || !value || tx.busy}
-        onClick={() =>
-          MARKET_ADDRESS && value && tx.send({ address: MARKET_ADDRESS, abi: marketAbi, functionName: "bet", args: [BigInt(m.id), yes], value })
-        }
+        disabled={disabled || !isConnected || !value || broke || tx.busy}
+        onClick={() => {
+          if (!MARKET_ADDRESS || !value) return;
+          if (needsApproval) tx.send({ address: token!, abi: erc20Abi, functionName: "approve", args: [MARKET_ADDRESS, value] });
+          else tx.send({ address: MARKET_ADDRESS, abi: marketAbi, functionName: "bet", args: [BigInt(m.id), yes, value] });
+        }}
       >
-        {!isConnected && !disabled ? "Connect wallet first" : `Bet ${yes ? "Yes" : "No"}`}
+        {!isConnected && !disabled
+          ? "Connect wallet first"
+          : broke
+            ? "Not enough USDC"
+            : needsApproval
+              ? `1/2 · Approve ${usdc(value!)}`
+              : `${tx.isSuccess ? "2/2 · " : ""}Bet ${yes ? "Yes" : "No"}`}
       </ArrowButton>
       {tx.status && <p className={`mt-4 text-[13px] ${tx.isError ? "text-no" : "text-white/70"}`}>{tx.status}</p>}
     </div>
@@ -163,7 +188,7 @@ function SettlePanel({ m, status }: { m: Market; status: "closed" | "settled" })
       <Label>{status === "closed" ? "Awaiting result" : "Settled"}</Label>
       {address && (
         <p className="mt-6 text-[14px]">
-          Your stake: {eth(yesStake ?? 0n)} on Yes · {eth(noStake ?? 0n)} on No
+          Your stake: {usdc(yesStake ?? 0n)} on Yes · {usdc(noStake ?? 0n)} on No
         </p>
       )}
 

@@ -11,7 +11,7 @@ const syne = Syne({ variable: "--font-syne", subsets: ["latin"], weight: ["700"]
 
 export const metadata: Metadata = {
   title: "Saidso — friend-group prediction markets",
-  description: "Bet ETH with friends on yes/no questions. Creator resolves, winners split the pot. Onchain on Base.",
+  description: "Bet USDC with friends on yes/no questions. Creator resolves, winners split the pot. Onchain on Base.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

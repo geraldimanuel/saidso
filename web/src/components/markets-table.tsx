@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { ArrowButton, Frame, Label, OddsBar } from "@/components/ui";
-import { eth, marketHref, odds, OUTCOME_LABEL, statusOf, timeLeft, useMarkets, useNow, type Status } from "@/lib/markets";
+import { usdc, marketHref, odds, OUTCOME_LABEL, statusOf, timeLeft, useMarkets, useNow, type Status } from "@/lib/markets";
 
 const FILTERS = ["all", "open", "closed", "settled"] as const;
 type Filter = (typeof FILTERS)[number];
@@ -89,7 +89,7 @@ export function MarketsTable() {
                       <span>No {o.no}%</span>
                     </p>
                   </td>
-                  <td className="hidden whitespace-nowrap px-3 py-6 sm:px-5 sm:table-cell">{eth(o.total)}</td>
+                  <td className="hidden whitespace-nowrap px-3 py-6 sm:px-5 sm:table-cell">{usdc(o.total)}</td>
                   <td className="px-3 py-6 sm:px-5">
                     <StatusTag status={statusOf(m, now)} outcome={m.outcome} />
                   </td>

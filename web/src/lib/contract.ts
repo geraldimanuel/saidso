@@ -13,7 +13,8 @@ export const marketAbi = parseAbi([
   "function noStake(uint256 id, address user) view returns (uint256)",
   "function claimed(uint256 id, address user) view returns (bool)",
   "function createMarket(string question, uint64 deadline) returns (uint256)",
-  "function bet(uint256 id, bool yes) payable",
+  "function bet(uint256 id, bool yes, uint256 amount)",
+  "function token() view returns (address)",
   "function resolve(uint256 id, uint8 outcome)",
   "function claim(uint256 id) returns (uint256)",
 ]);
@@ -24,6 +25,9 @@ export const wagmiConfig = createConfig({
   transports: { [CHAIN.id]: http() } as Record<typeof CHAIN.id, ReturnType<typeof http>>,
   ssr: true,
 });
+
+/** Bets are in USDC (6 decimals). ponytail: hardcoded; read token.decimals() if markets ever take other tokens. */
+export const DECIMALS = 6;
 
 export const Outcome = { Unresolved: 0, Yes: 1, No: 2, Invalid: 3 } as const;
 

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatEther, parseEther } from "viem";
+import { formatUnits, parseUnits } from "viem";
 import { useReadContract, useReadContracts } from "wagmi";
-import { MARKET_ADDRESS, marketAbi, Outcome, type Market } from "./contract";
+import { DECIMALS, MARKET_ADDRESS, marketAbi, Outcome, type Market } from "./contract";
 
 const H = 3600;
 const BASE = 1_793_000_000; // fixed so prerender and hydration agree
@@ -12,20 +12,20 @@ const demo = (id: number, question: string, dl: number, yes: string, no: string,
   question,
   deadline: BASE + dl,
   outcome,
-  yesPool: parseEther(yes),
-  noPool: parseEther(no),
+  yesPool: parseUnits(yes, DECIMALS),
+  noPool: parseUnits(no, DECIMALS),
   creator: `0x${(id + 1).toString(16).padStart(4, "0")}${"a1".repeat(18)}` as Market["creator"],
 });
 
 // ponytail: shown only when NEXT_PUBLIC_MARKET_ADDRESS is unset, so the site demos without a deployment
 export const DEMO_MARKETS: Market[] = [
-  demo(0, "Will Budi be late to dinner on Friday?", 30 * H, "0.42", "0.18"),
-  demo(1, "Will Sarah finish the marathon under 4 hours?", 70 * H, "0.6", "0.9"),
-  demo(2, "Will the group trip actually happen this year?", 140 * H, "0.25", "1.1"),
-  demo(3, "Will Andre's startup ship v1 before December?", 300 * H, "1.4", "0.35"),
-  demo(4, "Will Kevin reply to the group chat within an hour?", -20 * H, "0.3", "0.5", Outcome.No),
-  demo(5, "Will Mira beat everyone at karaoke night?", -60 * H, "0.8", "0.2", Outcome.Yes),
-  demo(6, "Will Tom keep his gym streak for 30 days?", -90 * H, "0.15", "0.45", Outcome.Yes),
+  demo(0, "Will Budi be late to dinner on Friday?", 30 * H, "42", "18"),
+  demo(1, "Will Sarah finish the marathon under 4 hours?", 70 * H, "60", "90"),
+  demo(2, "Will the group trip actually happen this year?", 140 * H, "25", "110"),
+  demo(3, "Will Andre's startup ship v1 before December?", 300 * H, "140", "35"),
+  demo(4, "Will Kevin reply to the group chat within an hour?", -20 * H, "30", "50", Outcome.No),
+  demo(5, "Will Mira beat everyone at karaoke night?", -60 * H, "80", "20", Outcome.Yes),
+  demo(6, "Will Tom keep his gym streak for 30 days?", -90 * H, "15", "45", Outcome.Yes),
 ];
 
 export function useMarkets() {
@@ -94,11 +94,8 @@ export function odds(m: Market) {
   return { yes, no: Math.round((100 - yes) * 10) / 10, total };
 }
 
-/** 3 decimals normally; tiny testnet amounts keep 2 significant digits instead of rounding to 0. */
-export const eth = (v: bigint) => {
-  const n = Number(formatEther(v));
-  return `${n.toLocaleString("en-US", n > 0 && n < 0.001 ? { maximumSignificantDigits: 2 } : { maximumFractionDigits: 3 })} ETH`;
-};
+/** Token base units -> "1,234.5 USDC". */
+export const usdc = (v: bigint) => `${Number(formatUnits(v, DECIMALS)).toLocaleString("en-US", { maximumFractionDigits: 2 })} USDC`;
 
 export function timeLeft(deadline: number, now: number | null) {
   if (now === null) return "—";

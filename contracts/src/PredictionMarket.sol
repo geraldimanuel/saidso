@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-/// @title PredictionMarket (v1, ETH)
-/// @notice Friend-group yes/no markets. Creator asks a question, friends bet ETH on YES or NO
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+/// @title PredictionMarket (v2, ERC-20 / USDC)
+/// @notice Friend-group yes/no markets. Creator asks a question, friends bet USDC on YES or NO
 ///         until the deadline, creator resolves, winners split the whole pot pro-rata.
+/// @dev Assumes a plain ERC-20 (USDC): no fee-on-transfer or rebasing tokens, since pools
+///      count the `amount` requested rather than what actually arrived.
 contract PredictionMarket {
+    using SafeERC20 for IERC20;
+
     enum Outcome {
         Unresolved,
         Yes,
@@ -20,6 +27,9 @@ contract PredictionMarket {
         uint256 noPool;
         string question;
     }
+
+    /// @notice The token every market is priced in. Fixed at deploy.
+    IERC20 public immutable token;
 
     uint256 public marketCount;
     mapping(uint256 => Market) internal _markets;
@@ -44,7 +54,10 @@ contract PredictionMarket {
     error NotResolved();
     error AlreadyClaimed();
     error NothingToClaim();
-    error TransferFailed();
+
+    constructor(IERC20 _token) {
+        token = _token;
+    }
 
     // ---------------------------------------------------------------------
     // Markets
@@ -72,22 +85,24 @@ contract PredictionMarket {
     // Betting, resolving, claiming
     // ---------------------------------------------------------------------
 
-    /// @notice Stake msg.value on YES (`yes = true`) or NO until the deadline.
-    function bet(uint256 id, bool yes) external payable {
+    /// @notice Stake `amount` tokens on YES (`yes = true`) or NO until the deadline.
+    ///         Call `token.approve(address(this), amount)` first.
+    function bet(uint256 id, bool yes, uint256 amount) external {
         if (id >= marketCount) revert MarketNotFound();
         Market storage m = _markets[id];
         if (block.timestamp >= m.deadline) revert BettingClosed();
-        if (msg.value == 0) revert ZeroAmount();
+        if (amount == 0) revert ZeroAmount();
 
         if (yes) {
-            m.yesPool += msg.value;
-            yesStake[id][msg.sender] += msg.value;
+            m.yesPool += amount;
+            yesStake[id][msg.sender] += amount;
         } else {
-            m.noPool += msg.value;
-            noStake[id][msg.sender] += msg.value;
+            m.noPool += amount;
+            noStake[id][msg.sender] += amount;
         }
 
-        emit BetPlaced(id, msg.sender, yes, msg.value);
+        token.safeTransferFrom(msg.sender, address(this), amount);
+        emit BetPlaced(id, msg.sender, yes, amount);
     }
 
     /// @notice Creator sets the result once betting has closed. One shot, no changes after.
@@ -125,8 +140,7 @@ contract PredictionMarket {
         claimed[id][msg.sender] = true;
 
         // interactions
-        (bool ok,) = msg.sender.call{value: payout}("");
-        if (!ok) revert TransferFailed();
+        token.safeTransfer(msg.sender, payout);
         emit Claimed(id, msg.sender, payout);
     }
 }
