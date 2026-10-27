@@ -29,6 +29,7 @@ forge build && forge test
 anvil
 forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast \
   --private-key <anvil account #0 key, printed when anvil starts>
+script/seed-local.sh <deployed address>   # 7 sample markets: open, closed, settled
 
 # web
 cd web
