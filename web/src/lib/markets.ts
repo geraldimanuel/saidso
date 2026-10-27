@@ -108,4 +108,16 @@ export function timeLeft(deadline: number, now: number | null) {
 
 export const OUTCOME_LABEL = ["Pending", "Yes", "No", "Void"] as const;
 
+/** `/markets/7-will-vani-be-accepted`: the leading number is the onchain id, the words are cosmetic. */
+export function marketHref(m: Pick<Market, "id" | "question">) {
+  const slug = m.question.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").slice(0, 60).replace(/^-+|-+$/g, "");
+  return `/markets/${m.id}${slug && `-${slug}`}`;
+}
+
+/** Market id from a slug segment, or null if it doesn't start with one. */
+export const idFromSlug = (slug: string) => {
+  const id = /^(\d+)(?:-|$)/.exec(slug)?.[1];
+  return id === undefined ? null : Number(id);
+};
+
 export const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;

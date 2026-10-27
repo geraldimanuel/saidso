@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { ArrowButton, Frame, Label, OddsBar } from "@/components/ui";
-import { eth, odds, OUTCOME_LABEL, statusOf, timeLeft, useMarkets, useNow, type Status } from "@/lib/markets";
+import { eth, marketHref, odds, OUTCOME_LABEL, statusOf, timeLeft, useMarkets, useNow, type Status } from "@/lib/markets";
 
 const FILTERS = ["all", "open", "closed", "settled"] as const;
 type Filter = (typeof FILTERS)[number];
@@ -77,7 +77,7 @@ export function MarketsTable() {
                 <tr key={m.id} className="group relative border-b border-line last:border-0 hover:bg-white/[0.04]">
                   <td className="hidden px-3 py-6 text-white/55 sm:table-cell sm:px-5">{String(m.id).padStart(2, "0")}</td>
                   <td className="px-3 py-6 sm:px-5">
-                    <Link href={`/markets/${m.id}`} className="display text-[18px] leading-[1.25] after:absolute after:inset-0">
+                    <Link href={marketHref(m)} className="display text-[18px] leading-[1.25] after:absolute after:inset-0">
                       {m.question}
                     </Link>
                   </td>

@@ -1,24 +1,31 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { parseEther } from "viem";
 import { useConnection, useReadContracts } from "wagmi";
 import { DemoNotice, StatusTag } from "@/components/markets-table";
 import { ArrowButton, Frame, Label, OddsBar } from "@/components/ui";
 import { MARKET_ADDRESS, marketAbi, Outcome, type Market } from "@/lib/contract";
-import { eth, odds, short, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
+import { eth, idFromSlug, marketHref, odds, short, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
 import { useTx } from "@/lib/tx";
 
-export function MarketDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export function MarketDetail({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params);
+  const id = idFromSlug(slug);
   const { markets, isDemo, isLoading } = useMarkets();
   const now = useNow();
-  const m = markets.find((x) => x.id === Number(id));
+  const m = markets.find((x) => x.id === id);
+
+  // Old or hand-typed URLs (`/markets/7`, a stale slug) get rewritten to the canonical one without a reload.
+  const href = m && marketHref(m);
+  useEffect(() => {
+    if (href && decodeURIComponent(location.pathname) !== href) history.replaceState(null, "", href);
+  }, [href]);
 
   if (!m)
     return (
       <main className="wrap pb-32 pt-40">
-        <Label>Market #{id}</Label>
+        <Label>Market #{id ?? "?"}</Label>
         <p className="display mt-6 text-[32px]">{isLoading ? "Loading…" : "Market not found."}</p>
         <ArrowButton href="/markets" className="mt-10">
           All markets

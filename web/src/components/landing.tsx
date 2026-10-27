@@ -5,7 +5,7 @@ import { CountUp, reveal, Scrub } from "@/components/motion";
 import { ArrowButton, d, Frame, Label, OddsBar, PixelMark, Split, VideoBg, XLines } from "@/components/ui";
 import { Avatar, Glow, OddsChart } from "@/components/visuals";
 import { REPO_URL } from "@/lib/contract";
-import { eth, odds, OUTCOME_LABEL, short, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
+import { eth, marketHref, odds, OUTCOME_LABEL, short, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
 
 export function Hero() {
   return (
@@ -143,7 +143,7 @@ export function OpenMarkets() {
                 <span>Yes {o.yes}%</span>
                 <span>No {o.no}%</span>
               </p>
-              <ArrowButton href={`/markets/${m.id}`} className="mt-8 self-start">
+              <ArrowButton href={marketHref(m)} className="mt-8 self-start">
                 Bet now
               </ArrowButton>
             </Frame>
@@ -246,7 +246,7 @@ export function RecentlySettled() {
                 <p className="mt-5 max-w-[480px] text-[14px] leading-[1.5]">
                   Settled {label.toUpperCase()}. {eth(m.yesPool + m.noPool)} pot, created by {short(m.creator)}.
                 </p>
-                <ArrowButton href={`/markets/${m.id}`} className="mt-10">
+                <ArrowButton href={marketHref(m)} className="mt-10">
                   View market
                 </ArrowButton>
               </div>
