@@ -47,37 +47,6 @@ body {
   padding-inline: clamp(16px, 4.9vw, 70px);
 }
 
-/* silky dark folds, stand-in for the template's photo background */
-.silk {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  background: #0b0b0b;
-}
-.silk::before {
-  content: "";
-  position: absolute;
-  inset: -20%;
-  z-index: -1;
-  background:
-    radial-gradient(90% 55% at 15% 105%, #3b3b3b 0%, transparent 60%),
-    radial-gradient(70% 40% at 95% 70%, #2a2a2a 0%, transparent 70%),
-    repeating-linear-gradient(162deg, #070707 0 70px, #1d1d1d 110px, #0a0a0a 170px);
-  filter: blur(16px);
-  transform: rotate(-4deg);
-  animation: drift 24s ease-in-out infinite alternate;
-}
-@keyframes drift {
-  to {
-    transform: rotate(-2deg) translate3d(-3%, 2%, 0) scale(1.05);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .silk::before {
-    animation: none;
-  }
-}
-
 /* split button: full top/bottom rules, short ticks at each vertical edge */
 .tick {
   --t: 1.5px;

@@ -1,14 +1,15 @@
 "use client";
 
 import { Wordmark } from "@/components/chrome";
-import { ArrowButton, Frame, Label, OddsBar, PixelMark, XLines } from "@/components/ui";
+import { ArrowButton, Frame, Label, OddsBar, PixelMark, VideoBg, XLines } from "@/components/ui";
 import { Avatar, Glow, OddsChart } from "@/components/visuals";
 import { REPO_URL } from "@/lib/contract";
 import { eth, odds, OUTCOME_LABEL, short, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
 
 export function Hero() {
   return (
-    <section className="silk relative min-h-[100svh]">
+    <section className="relative isolate min-h-[100svh] overflow-hidden">
+      <VideoBg />
       <XLines />
       <div className="wrap relative flex min-h-[100svh] flex-col justify-end pb-14 pt-32">
         <div className="mb-auto grid flex-1 items-center gap-10 md:grid-cols-2">

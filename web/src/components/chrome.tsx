@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 import { useConnect, useConnection, useConnectors, useDisconnect, WagmiProvider } from "wagmi";
 import { REPO_URL, wagmiConfig } from "@/lib/contract";
 import { short } from "@/lib/markets";
+import { VideoBg } from "@/components/ui";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(() => new QueryClient());
@@ -106,7 +107,8 @@ const FOOT = [
 
 export function Footer() {
   return (
-    <footer className="silk mt-auto">
+    <footer className="relative isolate mt-auto overflow-hidden">
+      <VideoBg />
       <div className="wrap pb-12 pt-20">
         <Wordmark />
         <div className="mt-14 grid grid-cols-2 gap-10 text-[14px] uppercase md:grid-cols-4">

@@ -54,6 +54,16 @@ export function Plus({ className = "" }: { className?: string }) {
   );
 }
 
+/** Looping wave footage, darkened so white type reads. Parent needs `relative isolate overflow-hidden`. */
+export function VideoBg() {
+  return (
+    <div className="absolute inset-0 -z-10 bg-black bg-[url(/hero-poster.jpg)] bg-cover bg-center" aria-hidden>
+      <video className="h-full w-full object-cover motion-reduce:hidden" src="/hero.mp4" poster="/hero-poster.jpg" autoPlay muted loop playsInline />
+      <div className="absolute inset-0 bg-black/70" />
+    </div>
+  );
+}
+
 /** Diagonal X + vertical centre rule used behind hero and CTA. */
 export function XLines({ className = "" }: { className?: string }) {
   return (
