@@ -56,6 +56,18 @@ TOKEN=0x036CbD53842c5426634e7929541eC2318f3dCF7e \
   forge script script/Deploy.s.sol --rpc-url https://sepolia.base.org --account deployer --broadcast --verify
 ```
 
+## Gas
+
+`forge test --gas-report`, median gas per call (v2). On Base Sepolia at ~0.006 gwei a bet costs well under $0.01.
+
+| Function | Gas |
+| --- | --- |
+| deploy | ~1,645,000 |
+| `createMarket` | 93,505 |
+| `bet` (plus roughly 50k for the `approve` on the token) | 96,106 |
+| `resolve` | 31,608 |
+| `claim` | 36,559 |
+
 ## Design decisions
 
 - **Pull payments.** Winners call `claim()`. The contract never loops over bettors to push tokens, so one bad recipient can't block payouts, and gas stays flat.
@@ -71,7 +83,7 @@ TOKEN=0x036CbD53842c5426634e7929541eC2318f3dCF7e \
 - [x] v1: ETH markets: create, bet, resolve, claim
 - [x] v2: USDC bets (ERC20 `approve` / `transferFrom`, SafeERC20)
 - [ ] v3: dispute window, auto-refund if the creator never resolves, invariant tests
-- [ ] v4: deploy + verify on Base Sepolia, gas report
+- [x] v4: deploy + verify on Base Sepolia, gas report
 - [ ] v5: real leaderboard from `Claimed` events (Ponder/subgraph), optional UMA oracle
 
 ## Credits
