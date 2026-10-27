@@ -1,30 +1,33 @@
 "use client";
 
 import { Wordmark } from "@/components/chrome";
-import { ArrowButton, Frame, Label, OddsBar, PixelMark, VideoBg, XLines } from "@/components/ui";
+import { CountUp, reveal, Scrub } from "@/components/motion";
+import { ArrowButton, d, Frame, Label, OddsBar, PixelMark, Split, VideoBg, XLines } from "@/components/ui";
 import { Avatar, Glow, OddsChart } from "@/components/visuals";
 import { REPO_URL } from "@/lib/contract";
 import { eth, odds, OUTCOME_LABEL, short, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
 
 export function Hero() {
   return (
-    <section className="relative isolate min-h-[100svh] overflow-hidden">
+    <section ref={reveal} className="rv relative isolate min-h-[100svh] overflow-hidden">
       <VideoBg />
       <XLines />
       <div className="wrap relative flex min-h-[100svh] flex-col justify-end pb-14 pt-32">
         <div className="mb-auto grid flex-1 items-center gap-10 md:grid-cols-2">
-          <h1 className="display max-w-[460px] text-[clamp(32px,3.2vw,44px)]">Where friends bet on each other&apos;s boldest claims.</h1>
+          <h1 className="display max-w-[460px] text-[clamp(32px,3.2vw,44px)]" style={d(500)}>
+            <Split text="Where friends bet on each other's boldest claims." />
+          </h1>
           <div className="max-w-[400px] md:justify-self-end">
-            <p className="text-[16px] leading-[1.5]">
+            <p className="fade text-[16px] leading-[1.5]" style={d(900)}>
               Prediction markets for your group chat. Ask a yes/no question, everyone stakes ETH on their call, and when time&apos;s up the
               winners split the whole pot.
             </p>
-            <ArrowButton href="/markets" className="mt-12">
-              Browse markets
-            </ArrowButton>
+            <div className="fade mt-12" style={d(1100)}>
+              <ArrowButton href="/markets">Browse markets</ArrowButton>
+            </div>
           </div>
         </div>
-        <Wordmark />
+        <Wordmark delay={700} />
       </div>
     </section>
   );
@@ -36,7 +39,7 @@ export function About() {
       <div className="grid gap-12 md:grid-cols-[1fr_1.4fr]">
         <div className="flex flex-col justify-between gap-12 pb-12">
           <PixelMark />
-          <div>
+          <div ref={reveal} className="rv fade">
             <p className="max-w-[400px] text-[16px] leading-[1.5]">
               At Saidso, every "I said so" becomes a market. Put your ETH where your mouth is, and let a smart contract keep score.
             </p>
@@ -47,11 +50,9 @@ export function About() {
         </div>
         <div>
           <Label>About</Label>
-          <h2 className="display mt-5 text-[clamp(28px,3vw,42px)]">
-            <span className="text-white/45">Not a casino —</span> a group chat with a pot, where being right finally pays.
-          </h2>
+          <Scrub className="display mt-5 text-[clamp(28px,3vw,42px)]" muted="Not a casino —" text="a group chat with a pot, where being right finally pays." />
           <div className="mt-16 grid grid-cols-1 sm:grid-cols-[1.5fr_1fr] sm:gap-5">
-            <Glow seed="about-ticket" className="flex aspect-[46/28] flex-col justify-end p-6">
+            <Glow seed="about-ticket" ref={reveal} className="rv wipe flex aspect-[46/28] flex-col justify-end p-6">
               <p className="text-[12px] uppercase text-white/80">[ Live market ]</p>
               <p className="display mt-2 text-[22px]">Will Budi be late to dinner?</p>
               <OddsBar yes={70} className="mt-4" />
@@ -60,7 +61,7 @@ export function About() {
                 <span>No 30%</span>
               </p>
             </Glow>
-            <Frame className="mt-8 flex items-center justify-center p-10 sm:mt-0">
+            <Frame className="mt-8 flex items-center justify-center p-10 sm:mt-0" delay={250}>
               <div className="w-full space-y-3 text-[13px]">
                 <p className="text-white/50">{"// after resolve()"}</p>
                 <p>
@@ -89,9 +90,11 @@ export function Stats() {
   ];
   return (
     <section id="stats" className="wrap scroll-mt-16 pt-32">
-      <div className="text-center">
+      <div ref={reveal} className="rv text-center">
         <Label>Game changing stats</Label>
-        <h2 className="display mx-auto mt-5 max-w-[760px] text-[clamp(28px,3vw,42px)]">Sharp takes, real stakes, zero arguing about who said what.</h2>
+        <h2 className="display mx-auto mt-5 max-w-[760px] text-[clamp(28px,3vw,42px)]">
+          <Split text="Sharp takes, real stakes, zero arguing about who said what." />
+        </h2>
       </div>
       <Frame className="mt-16">
         <div className="relative h-[clamp(220px,28vw,400px)] bg-[radial-gradient(70%_120%_at_30%_100%,#123b2a_0%,#000_70%)]">
@@ -101,7 +104,9 @@ export function Stats() {
           {stats.map(([n, label, desc]) => (
             <div key={label} className="px-[clamp(16px,3.5vw,50px)] py-9">
               <p className="flex items-start gap-2">
-                <span className="wordmark text-[clamp(40px,4vw,54px)]">{n}</span>
+                <span className="wordmark text-[clamp(40px,4vw,54px)]">
+                  <CountUp value={n} />
+                </span>
                 <span className="text-[14px] uppercase">[ {label} ]</span>
               </p>
               <p className="mt-6 max-w-[240px] text-[15px] uppercase">{desc}</p>
@@ -119,15 +124,17 @@ export function OpenMarkets() {
   const open = markets.filter((m) => statusOf(m, now) === "open").slice(0, 4);
   return (
     <section id="markets" className="wrap scroll-mt-16 pt-32">
-      <div className="grid gap-6 md:grid-cols-[1fr_1.4fr]">
+      <div ref={reveal} className="rv grid gap-6 md:grid-cols-[1fr_1.4fr]">
         <Label>Open markets</Label>
-        <h2 className="display text-[clamp(28px,3vw,42px)]">Pick a side on the questions your friends can&apos;t stop arguing about.</h2>
+        <h2 className="display text-[clamp(28px,3vw,42px)]">
+          <Split text="Pick a side on the questions your friends can't stop arguing about." />
+        </h2>
       </div>
       <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {open.map((m) => {
+        {open.map((m, i) => {
           const o = odds(m);
           return (
-            <Frame key={m.id} className="flex flex-col border-transparent bg-card p-5">
+            <Frame key={m.id} className="flex flex-col bg-card p-5" bare delay={i * 120}>
               <p className="text-[13px] uppercase text-white/85">[ Closes in {timeLeft(m.deadline, now)} ]</p>
               <h3 className="display mt-4 min-h-[3.4em] text-[24px] leading-[1.15]">{m.question}</h3>
               <p className="mt-6 text-[13px] uppercase">Pot {eth(o.total)}</p>
@@ -152,14 +159,14 @@ const STACK = ["Solidity", "Foundry", "Base", "viem", "wagmi", "Next.js"];
 
 export function BuiltWith() {
   return (
-    <section className="wrap pt-32">
+    <section ref={reveal} className="rv wrap pt-32">
       <div className="flex items-center gap-7">
         <PixelMark size={62} />
-        <p className="max-w-[380px] text-[16px] leading-[1.5]">Built on boring, battle-tested tools so the only drama is in the questions.</p>
+        <p className="fade max-w-[380px] text-[16px] leading-[1.5]">Built on boring, battle-tested tools so the only drama is in the questions.</p>
       </div>
       <ul className="mt-14 flex flex-wrap items-center justify-between gap-x-10 gap-y-6">
-        {STACK.map((s) => (
-          <li key={s} className="flex items-center gap-2.5 font-[family-name:var(--font-host-grotesk)] text-[22px] font-semibold tracking-tight">
+        {STACK.map((s, i) => (
+          <li key={s} style={d(200 + i * 80)} className="fade flex items-center gap-2.5 font-[family-name:var(--font-host-grotesk)] text-[22px] font-semibold tracking-tight">
             <span className="grid h-7 w-7 place-items-center border border-white/80 text-[12px]">{s[0]}</span>
             {s}
           </li>
@@ -175,7 +182,9 @@ export function HowItWorks() {
       <Frame className="grid items-center gap-10 p-[clamp(20px,2.8vw,40px)] md:grid-cols-2">
         <div>
           <Label>Step 01</Label>
-          <h3 className="display mt-4 text-[clamp(26px,2.6vw,36px)]">Ask a yes/no question, set a deadline</h3>
+          <h3 className="display mt-4 text-[clamp(26px,2.6vw,36px)]">
+            <Split text="Ask a yes/no question, set a deadline" />
+          </h3>
           <p className="mt-5 max-w-[480px] text-[16px] leading-[1.5]">
             Anyone can open a market. Friends bet ETH on YES or NO until the deadline, and every bet is public, onchain and final.
           </p>
@@ -183,7 +192,7 @@ export function HowItWorks() {
             Create a market
           </ArrowButton>
         </div>
-        <Glow seed="step-1" className="aspect-[58/30] p-6 text-[13px] leading-[1.7]">
+        <Glow seed="step-1" className="wipe aspect-[58/30] p-6 text-[13px] leading-[1.7]">
           <pre className="relative whitespace-pre-wrap">
             <span className="text-white/60">{"// one tx, that's the whole setup\n"}</span>
             {"pm.createMarket(\n  "}
@@ -193,7 +202,7 @@ export function HowItWorks() {
         </Glow>
       </Frame>
       <Frame className="grid items-center gap-10 p-[clamp(20px,2.8vw,40px)] md:grid-cols-2">
-        <Glow seed="step-2" className="order-last aspect-[58/34] p-6 md:order-first">
+        <Glow seed="step-2" className="wipe order-last aspect-[58/34] p-6 md:order-first">
           <div className="relative flex h-full flex-col justify-center gap-4">
             <p className="display text-[clamp(20px,2.2vw,30px)]">payout = stake × pot ÷ winning pool</p>
             <p className="text-[13px] text-white/80">1 ETH on YES · pot 8 ETH · YES pool 4 ETH → 2 ETH back</p>
@@ -201,7 +210,9 @@ export function HowItWorks() {
         </Glow>
         <div>
           <Label>Step 02</Label>
-          <h3 className="display mt-4 text-[clamp(26px,2.6vw,36px)]">Winners split the whole pot</h3>
+          <h3 className="display mt-4 text-[clamp(26px,2.6vw,36px)]">
+            <Split text="Winners split the whole pot" />
+          </h3>
           <p className="mt-5 max-w-[480px] text-[16px] leading-[1.5]">
             The creator settles the outcome after the deadline. Winners claim pro-rata. Nobody bet on the right side, or the market is
             voided? Everyone gets refunded.
@@ -222,14 +233,16 @@ export function RecentlySettled() {
   if (settled.length === 0) return null;
   return (
     <section id="settled" className="wrap scroll-mt-16 pt-32">
-      <p className="max-w-[360px] text-[16px] leading-[1.5]">Catch up on the latest calls — who was right, and who paid up.</p>
+      <p ref={reveal} className="rv fade max-w-[360px] text-[16px] leading-[1.5]">Catch up on the latest calls — who was right, and who paid up.</p>
       <div className="mt-16 border-t border-line">
         {settled.map((m) => {
           const label = OUTCOME_LABEL[m.outcome];
           return (
-            <article key={m.id} className="grid items-center gap-8 border-b border-line py-8 md:grid-cols-2">
+            <article key={m.id} ref={reveal} className="rv grid items-center gap-8 border-b border-line py-8 md:grid-cols-2">
               <div>
-                <h3 className="display text-[clamp(20px,1.8vw,24px)] leading-[1.35]">{m.question}</h3>
+                <h3 className="display text-[clamp(20px,1.8vw,24px)] leading-[1.35]">
+                  <Split text={m.question} />
+                </h3>
                 <p className="mt-5 max-w-[480px] text-[14px] leading-[1.5]">
                   Settled {label.toUpperCase()}. {eth(m.yesPool + m.noPool)} pot, created by {short(m.creator)}.
                 </p>
@@ -237,7 +250,7 @@ export function RecentlySettled() {
                   View market
                 </ArrowButton>
               </div>
-              <Glow seed={`settled-${m.id}`} className="grid aspect-[635/270] place-items-center">
+              <Glow seed={`settled-${m.id}`} className="wipe grid aspect-[635/270] place-items-center" style={d(150)}>
                 <span className="wordmark relative text-[clamp(56px,9vw,130px)]">{label}</span>
               </Glow>
             </article>
@@ -261,9 +274,9 @@ export function TopCallers() {
     <section id="callers" className="wrap scroll-mt-16 pb-32 pt-32">
       <Label>Top callers · sample</Label>
       <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {CALLERS.map(([addr, name, rec]) => (
-          <Frame key={addr} className="p-[15px]">
-            <Avatar seed={addr} className="aspect-square w-full" />
+        {CALLERS.map(([addr, name, rec], i) => (
+          <Frame key={addr} className="p-[15px]" delay={i * 120}>
+            <Avatar seed={addr} className="wipe aspect-square w-full" />
             <h3 className="display mt-8 text-[20px]">{name}</h3>
             <p className="mt-1 text-[14px]">
               {addr} / {rec}
@@ -277,18 +290,20 @@ export function TopCallers() {
 
 export function Cta() {
   return (
-    <section className="relative border-t border-line">
+    <section ref={reveal} className="rv relative border-t border-line">
       <XLines />
       <div className="wrap relative grid min-h-[480px] gap-10 py-6 md:grid-cols-2">
         <Label>Your turn</Label>
         <div className="self-start pt-4 md:pl-[70px]">
-          <h2 className="display text-[clamp(30px,3vw,42px)]">Got a take your friends won&apos;t believe?</h2>
-          <p className="mt-6 max-w-[580px] text-[16px] leading-[1.5]">
+          <h2 className="display text-[clamp(30px,3vw,42px)]">
+            <Split text="Got a take your friends won't believe?" />
+          </h2>
+          <p className="fade mt-6 max-w-[580px] text-[16px] leading-[1.5]" style={d(300)}>
             Turn it into a market in one transaction. Share the link, let them bet against you, and collect when you&apos;re right.
           </p>
-          <ArrowButton href="/create" className="mt-12">
-            Create a market
-          </ArrowButton>
+          <div className="fade mt-12" style={d(500)}>
+            <ArrowButton href="/create">Create a market</ArrowButton>
+          </div>
         </div>
       </div>
     </section>

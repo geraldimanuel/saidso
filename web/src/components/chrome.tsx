@@ -6,7 +6,8 @@ import { useState, type ReactNode } from "react";
 import { useConnect, useConnection, useConnectors, useDisconnect, WagmiProvider } from "wagmi";
 import { REPO_URL, wagmiConfig } from "@/lib/contract";
 import { short } from "@/lib/markets";
-import { VideoBg } from "@/components/ui";
+import { d, Split, VideoBg } from "@/components/ui";
+import { reveal } from "@/components/motion";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(() => new QueryClient());
@@ -48,7 +49,7 @@ const LINKS = [
 export function Nav() {
   const [open, setOpen] = useState(false);
   return (
-    <header className="fixed inset-x-0 top-0 z-50 bg-black/70 backdrop-blur-sm">
+    <header ref={reveal} className="rv fixed inset-x-0 top-0 z-50 bg-black/70 backdrop-blur-sm">
       <div className="wrap flex h-[62px] items-center justify-between text-[14px] uppercase">
         <Link href="/" className="wordmark text-[18px] tracking-[0.02em]">
           Saidso
@@ -80,19 +81,26 @@ export function Nav() {
   );
 }
 
-export function Wordmark() {
+/** Giant wordmark + bracketed tagline. Animates when an ancestor `.rv` reveals. */
+export function Wordmark({ delay = 0 }: { delay?: number }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-4 lg:flex-nowrap">
-      <span className="wordmark text-[clamp(56px,8vw,118px)]">Saidso</span>
-      <span className="hidden h-[5px] w-[100px] shrink-0 bg-white lg:block" aria-hidden />
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-4 lg:flex-nowrap" style={d(delay)}>
+      <span className="wordmark text-[clamp(56px,8vw,118px)]" aria-label="Saidso">
+        <Split text="Saidso" by="char" step={60} />
+      </span>
+      <span className="dash hidden h-[5px] w-[100px] shrink-0 bg-white lg:block" aria-hidden />
       <span className="flex min-w-0 flex-1 basis-full items-center justify-between gap-4 lg:basis-auto">
-        <span className="text-[clamp(48px,7vw,96px)] font-extralight leading-none">(</span>
-        <span className="display text-center text-[clamp(20px,2.4vw,34px)]">
-          Your friends&apos; wildest takes,
-          <br />
-          settled onchain
+        <span className="paren-l text-[clamp(48px,7vw,96px)] font-extralight leading-none" aria-hidden>
+          (
         </span>
-        <span className="text-[clamp(48px,7vw,96px)] font-extralight leading-none">)</span>
+        <span className="display text-center text-[clamp(20px,2.4vw,34px)]" style={d(delay + 500)}>
+          <Split text="Your friends' wildest takes," />
+          <br />
+          <Split text="settled onchain" />
+        </span>
+        <span className="paren-r text-[clamp(48px,7vw,96px)] font-extralight leading-none" aria-hidden>
+          )
+        </span>
       </span>
     </div>
   );
@@ -107,7 +115,7 @@ const FOOT = [
 
 export function Footer() {
   return (
-    <footer className="relative isolate mt-auto overflow-hidden">
+    <footer ref={reveal} className="rv relative isolate mt-auto overflow-hidden">
       <VideoBg />
       <div className="wrap pb-12 pt-20">
         <Wordmark />

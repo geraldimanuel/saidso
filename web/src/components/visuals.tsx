@@ -14,12 +14,14 @@ function hash(s: string) {
   return Math.abs(h);
 }
 
-export function Glow({ seed, className = "", children }: { seed: string; className?: string; children?: React.ReactNode }) {
+export function Glow({ seed, className = "", style, ref, children }: { seed: string; className?: string; style?: React.CSSProperties; ref?: React.Ref<HTMLDivElement>; children?: React.ReactNode }) {
   const [a, b, c] = PALETTES[hash(seed) % PALETTES.length];
   return (
     <div
+      ref={ref}
       className={`relative overflow-hidden ${className}`}
       style={{
+        ...style,
         background: `radial-gradient(80% 90% at 20% 15%, ${b} 0%, transparent 55%), radial-gradient(70% 80% at 85% 90%, ${c} 0%, transparent 60%), ${a}`,
       }}
     >
@@ -63,7 +65,7 @@ export function OddsChart() {
     return `${(i / 47) * 100},${y.toFixed(2)}`;
   }).join(" ");
   return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full" aria-hidden>
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="plot absolute inset-0 h-full w-full" aria-hidden>
       <defs>
         <linearGradient id="fill" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0" stopColor="#c8ff5a" stopOpacity="0.35" />
