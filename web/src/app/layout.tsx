@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist_Mono, Host_Grotesk, Syne } from "next/font/google";
 import { Footer, Nav, Providers } from "@/components/chrome";
 import { Motion } from "@/components/motion";
+import { SITE_URL } from "@/lib/og";
 import "lenis/dist/lenis.css";
 import "./globals.css";
 
@@ -9,10 +10,18 @@ const hostGrotesk = Host_Grotesk({ variable: "--font-host-grotesk", subsets: ["l
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 const syne = Syne({ variable: "--font-syne", subsets: ["latin"], weight: ["700"] });
 
+const description = "Bet USDC with friends on yes/no questions. The creator calls it, a friend settles disputes, winners split the pot. Onchain on Base.";
+
 export const metadata: Metadata = {
-  title: "Saidso — friend-group prediction markets",
-  description: "Bet USDC with friends on yes/no questions. Creator resolves, winners split the pot. Onchain on Base.",
+  metadataBase: new URL(SITE_URL), // makes og:image absolute, which WhatsApp requires
+  title: { default: "Saidso — friend-group prediction markets", template: "%s — Saidso" },
+  description,
+  applicationName: "Saidso",
+  openGraph: { type: "website", siteName: "Saidso", locale: "en_US", url: "/", description },
+  twitter: { card: "summary_large_image" },
 };
+
+export const viewport = { themeColor: "#000000" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
