@@ -19,7 +19,7 @@ export async function GET() {
   let from = DEPLOY_BLOCK;
   for (;;) {
     const url = `${BLOCKSCOUT}?module=logs&action=getLogs&address=${MARKET_ADDRESS}&topic0=${BET_PLACED}&fromBlock=${from}&toBlock=latest${key ? `&apikey=${key}` : ""}`;
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10_000) }); // a hung indexer must not hang the page
     // errors are never cached, so the next visitor retries instead of seeing a stale failure
     if (!res.ok) return Response.json({ error: `indexer ${res.status}` }, { status: 502, headers: { "Cache-Control": "no-store" } });
     const page: RawLog[] = (await res.json()).result ?? [];
