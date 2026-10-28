@@ -1,23 +1,20 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { decodeEventLog, toEventSelector, type Address, type Hex, type PublicClient } from "viem";
+import type { Address, PublicClient } from "viem";
 import { usePublicClient } from "wagmi";
 import { foundry } from "wagmi/chains";
-import { CHAIN, DEPLOY_BLOCK, MARKET_ADDRESS, marketAbi, Outcome } from "./contract";
+import type { BetJson } from "@/app/api/bets/route";
+import { CHAIN, MARKET_ADDRESS, marketAbi, Outcome } from "./contract";
 import { phaseOf, useMarkets, useNow } from "./markets";
 
 type Bet = { id: number; bettor: Address; yes: boolean; amount: bigint };
-type RawLog = { data: Hex; topics: (Hex | null)[]; blockNumber: Hex; transactionHash: Hex; logIndex: Hex };
 
 export type Caller = { address: Address; profit: bigint; volume: bigint; calls: number; correct: number };
 
-const BLOCKSCOUT = "https://base-sepolia.blockscout.com/api";
-const BET_PLACED = toEventSelector("BetPlaced(uint256,address,bool,uint256)");
-
 /**
- * Every BetPlaced since deploy. Base's public RPC caps eth_getLogs at 200 blocks (~7 min), so on
- * Base Sepolia we ask Blockscout's indexer, which serves the whole range in one go; anvil has no cap.
+ * Every BetPlaced since deploy. Anvil: straight from the node. Elsewhere: our /api/bets route,
+ * which reads Blockscout's indexer once and caches it for everyone (see that file for why).
  * ponytail: all bets are refetched each time; past a few thousand, move to an indexer (Ponder).
  */
 async function fetchBets(client: PublicClient): Promise<Bet[]> {
@@ -25,21 +22,9 @@ async function fetchBets(client: PublicClient): Promise<Bet[]> {
     const logs = await client.getContractEvents({ address: MARKET_ADDRESS!, abi: marketAbi, eventName: "BetPlaced", fromBlock: 0n });
     return logs.map(({ args }) => ({ id: Number(args.id), bettor: args.bettor!, yes: args.yes!, amount: args.amount! }));
   }
-  const bets = new Map<string, Bet>();
-  let from = DEPLOY_BLOCK;
-  for (;;) {
-    const url = `${BLOCKSCOUT}?module=logs&action=getLogs&address=${MARKET_ADDRESS}&topic0=${BET_PLACED}&fromBlock=${from}&toBlock=latest`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Blockscout ${res.status}`);
-    const page: RawLog[] = (await res.json()).result ?? [];
-    for (const l of page) {
-      const { args } = decodeEventLog({ abi: marketAbi, eventName: "BetPlaced", data: l.data, topics: l.topics.filter(Boolean) as [Hex, ...Hex[]] });
-      bets.set(l.transactionHash + l.logIndex, { id: Number(args.id), bettor: args.bettor, yes: args.yes, amount: args.amount });
-    }
-    // Blockscout pages at 1,000 logs: restart from the last block seen; the Map drops the overlap
-    if (page.length < 1000) return [...bets.values()];
-    from = BigInt(page[page.length - 1].blockNumber);
-  }
+  const res = await fetch("/api/bets");
+  if (!res.ok) throw new Error(`bets ${res.status}`);
+  return ((await res.json()) as BetJson[]).map((b) => ({ ...b, amount: BigInt(b.amount) }));
 }
 
 /** Callers ranked by net profit on final markets, using the contract's own payout formula (unclaimed wins count). */
@@ -52,6 +37,7 @@ export function useLeaderboard() {
     queryFn: () => fetchBets(client!),
     enabled: !!MARKET_ADDRESS && !!client,
     staleTime: 60_000,
+    retry: 1, // a rate-limited indexer won't recover in seconds; show the error instead of hammering it
   });
 
   if (isDemo) return { callers: DEMO_CALLERS, isDemo, isLoading: false, isError: false };
