@@ -42,7 +42,7 @@ const LINKS = [
   ["/#about", "About"],
   ["/markets", "Markets"],
   ["/#how", "How it works"],
-  ["/#callers", "Top callers"],
+  ["/leaderboard", "Top callers"],
   ["/create", "Create"],
 ] as const;
 
@@ -108,7 +108,7 @@ export function Wordmark({ delay = 0 }: { delay?: number }) {
 
 const FOOT = [
   [["/#about", "About"], ["/markets", "Markets"], ["/create", "Create market"], ["/#how", "How it works"]],
-  [["/#callers", "Top callers"], ["/#settled", "Recently settled"], ["/#stats", "Stats"], ["/markets?f=open", "Open now"]],
+  [["/leaderboard", "Top callers"], ["/#settled", "Recently settled"], ["/#stats", "Stats"], ["/markets?f=open", "Open now"]],
   [["https://book.getfoundry.sh", "Foundry"], ["https://wagmi.sh", "wagmi"], ["https://viem.sh", "viem"], ["https://base.org", "Base"]],
   [[REPO_URL, "GitHub"], ["https://x.com", "X"], ["https://warpcast.com", "Farcaster"], ["https://sepolia.basescan.org", "Basescan"]],
 ] as const;

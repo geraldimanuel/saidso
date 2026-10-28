@@ -5,6 +5,12 @@ import { baseSepolia, foundry } from "wagmi/chains";
 export const MARKET_ADDRESS = process.env.NEXT_PUBLIC_MARKET_ADDRESS as Address | undefined;
 export const CHAIN = process.env.NEXT_PUBLIC_CHAIN === "anvil" ? foundry : baseSepolia;
 
+// First block to scan for events, per deployment (receipts in contracts/broadcast/Deploy.s.sol/<chain>/).
+const DEPLOY_BLOCKS: Record<string, bigint> = {
+  "0xa1c736e608b9a3afb2f28a2fc1a9c13083cf070f": 51_071_527n, // v3, Base Sepolia
+};
+export const DEPLOY_BLOCK = (MARKET_ADDRESS && DEPLOY_BLOCKS[MARKET_ADDRESS.toLowerCase()]) ?? 0n;
+
 export const marketAbi = parseAbi([
   "struct Market { address creator; uint64 deadline; uint8 outcome; bool arbitrated; address arbiter; uint64 resolvedAt; uint64 disputedAt; uint256 yesPool; uint256 noPool; string question; }",
   "function marketCount() view returns (uint256)",
@@ -22,6 +28,7 @@ export const marketAbi = parseAbi([
   "function dispute(uint256 id)",
   "function arbitrate(uint256 id, uint8 outcome)",
   "function claim(uint256 id) returns (uint256)",
+  "event BetPlaced(uint256 indexed id, address indexed bettor, bool yes, uint256 amount)",
 ]);
 
 export const wagmiConfig = createConfig({

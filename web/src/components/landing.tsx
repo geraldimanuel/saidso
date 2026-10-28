@@ -1,10 +1,12 @@
 "use client";
 
 import { Wordmark } from "@/components/chrome";
+import { record, signed } from "@/components/leaderboard";
 import { CountUp, reveal, Scrub } from "@/components/motion";
 import { ArrowButton, d, Frame, Label, OddsBar, PixelMark, Split, VideoBg, XLines } from "@/components/ui";
 import { Avatar, Glow, OddsChart } from "@/components/visuals";
 import { REPO_URL } from "@/lib/contract";
+import { useLeaderboard } from "@/lib/leaderboard";
 import { usdc, marketHref, odds, OUTCOME_LABEL, phaseOf, short, statusOf, timeLeft, useMarkets, useNow } from "@/lib/markets";
 
 export function Hero() {
@@ -264,29 +266,30 @@ export function RecentlySettled() {
   );
 }
 
-// ponytail: sample leaderboard. Real one needs Claimed-event indexing (Ponder/subgraph) — v5.
-const CALLERS = [
-  ["0x8f3a…21cd", "Oracle of Friday", "Win rate 82% / 14 calls"],
-  ["0x1b77…9e04", "Late-Budi Truther", "Win rate 76% / 21 calls"],
-  ["0xc04e…7a11", "Karaoke Analyst", "Win rate 71% / 9 calls"],
-  ["0x5d2f…b3e8", "Gym Streak Skeptic", "Win rate 68% / 16 calls"],
-];
-
 export function TopCallers() {
+  const { callers, isDemo } = useLeaderboard();
+  const top = callers.slice(0, 4);
   return (
     <section id="callers" className="wrap scroll-mt-16 pb-32 pt-32">
-      <Label>Top callers · sample</Label>
-      <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {CALLERS.map(([addr, name, rec], i) => (
-          <Frame key={addr} className="p-[15px]" delay={i * 120}>
-            <Avatar seed={addr} className="wipe aspect-square w-full" />
-            <h3 className="display mt-8 text-[20px]">{name}</h3>
-            <p className="mt-1 text-[14px]">
-              {addr} / {rec}
-            </p>
-          </Frame>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-6">
+        <Label>Top callers{isDemo ? " · sample" : ""}</Label>
+        <ArrowButton href="/leaderboard">Full leaderboard</ArrowButton>
       </div>
+      {top.length === 0 ? (
+        <p className="mt-14 text-[16px] text-white/60">No calls yet. Place the first bet and take the top spot.</p>
+      ) : (
+        <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {top.map((c, i) => (
+            <Frame key={c.address} className="p-[15px]" delay={i * 120}>
+              <Avatar seed={c.address} className="wipe aspect-square w-full" />
+              <h3 className={`display mt-8 text-[20px] ${c.profit > 0n ? "text-yes" : c.profit < 0n ? "text-no" : ""}`}>{signed(c.profit)}</h3>
+              <p className="mt-1 text-[14px]">
+                {short(c.address)} / {record(c)}
+              </p>
+            </Frame>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

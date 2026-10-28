@@ -81,6 +81,7 @@ TOKEN=0x036CbD53842c5426634e7929541eC2318f3dCF7e \
 - **Nobody can strand the pot.** After the deadline the creator has a resolve window, bettors then get a dispute window, and a disputed result goes to the market's arbiter. A creator or arbiter who stays silent voids the market, so every path ends in payouts or refunds. Windows are immutable constructor args: 7 days / 24 hours / 3 days by default.
 - **Final means final.** `finalOutcome()` derives the result from timestamps, and late `resolve` / `arbitrate` calls revert, so a result can't change after anyone may have claimed on it. The invariant suite checks this, alongside "balance equals deposits minus payouts" and "no market pays out more than its pot".
 - **Trust model.** The creator calls the result and a friend arbitrates disputes. The arbiter can't be the creator and can't bet from their address, but nothing stops them betting from another wallet: it fits friends, not strangers. See the roadmap.
+- **Leaderboard from events, no redeploy.** Profit = what `claim()` would pay minus what you staked, over final markets, so unclaimed wins and never-claimed losses both count (a `Claimed`-only board would miss losers). Base's public RPC caps `eth_getLogs` at 200 blocks, so bets come from Blockscout's indexer starting at the deploy block.
 - **Rounding.** Pro-rata division can leave a few wei of dust in the contract. The fuzz test bounds it.
 
 ## Roadmap
@@ -89,7 +90,8 @@ TOKEN=0x036CbD53842c5426634e7929541eC2318f3dCF7e \
 - [x] v2: USDC bets (ERC20 `approve` / `transferFrom`, SafeERC20)
 - [x] v3: dispute window with an arbiter, auto-refund if the creator or arbiter goes silent, invariant tests
 - [x] v4: deploy + verify on Base Sepolia, gas report
-- [ ] v5: real leaderboard from `Claimed` events (Ponder/subgraph), optional UMA oracle
+- [x] v5: real leaderboard from onchain `BetPlaced` events (via Blockscout's indexer API), profit computed with the contract's payout formula
+- [ ] v6: own indexer (Ponder) once bets outgrow one API call, optional UMA oracle
 
 ## Credits
 
